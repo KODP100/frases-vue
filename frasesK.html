@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frases de Autores</title>
+  <!-- Incluir Bootstrap CSS desde CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Incluir Vue.js desde el CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .modal-content {
+      border-radius: 0.5rem;
+    }
+    .alert {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1050;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="container">
+    <h2>Frases de Autores</h2>
+    <button @click="showAddModal = true" class="btn btn-warning mb-3" data-bs-toggle="modal" data-bs-target="#addModal">Añadir Frase</button>
+
+    <!-- Tabla de frases -->
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Texto</th>
+          <th>Autor</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(frase, index) in frases" :key="index">
+          <td>{{ index + 1 }}</td>
+          <td>{{ frase.texto }}</td>
+          <td>{{ frase.autor }}</td>
+          <td>
+            <button @click="openEditModal(index)" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#editModal">Editar</button>
+            <button @click="deleteFrase(index)" class="btn btn-danger btn-sm">Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Modal para añadir una nueva frase -->
+    <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addModalLabel">Añadir Frase</h5> <!--tenemos el etiquetado H5 -->
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <input v-model="newFrase.texto" class="form-control" placeholder="Nueva frase" />
+            </div>
+            <div class="mb-3">
+              <input v-model="newFrase.autor" class="form-control" placeholder="Nuevo autor" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" @click="addFrase">Añadir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para editar una frase -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editModalLabel">Editar Frase #{{ editIndex + 1 }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">      <!--tenemos los atributos placeholder para hser ediciones como autor y frase  -->
+              <input v-model="editFrase.texto" class="form-control" placeholder="Editar frase" />
+            </div>
+            <div class="mb-3">
+              <input v-model="editFrase.autor" class="form-control" placeholder="Editar autor" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" @click="saveEdit">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alertas de Bootstrap usando alerta y roles -->
+    <div v-if="alertMessage" class="alert alert-dismissible fade show" :class="alertClass" role="alert">
+      {{ alertMessage }}
+      <button type="button" class="btn-close" @click="alertMessage = ''"></button>
+    </div>
+  </div>
+
+  <!-- Incluir Bootstrap JS y dependencias desde CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const app = Vue.createApp({
+      data() {
+        return {
+          frases: [
+            { texto: "El aprender es conocer.", autor: "Francis allen" },
+            { texto: "El puño de la justicia es unisex.", autor: "The batman" },
+            { texto: "Compermisito dijo monchito.", autor: "Ron Ramon" },
+            { texto: "El único modo de hacer un gran trabajo es amar lo que haces.", autor: "Steve Jobs" },
+            { texto: "La imaginación es más importante que el conocimiento.", autor: "Albert Einstein" }
+          ],
+
+          //usamos el campo de accion para introducir nuevas frases 
+          selectedIndex: null,
+          editIndex: null,
+          editFrase: {
+            texto: '',
+            autor: ''
+          },
+          newFrase: {
+            texto: '',
+            autor: ''
+          },
+          showAddModal: false,
+          showEditModal: false,
+          alertMessage: '',
+          alertClass: ''
+        };
+      },
+      methods: {
+        openEditModal(index) {
+          this.editIndex = index;
+          this.editFrase = { ...this.frases[index] };
+        },
+        addFrase() {   //creamos la nueva frase y si no esta llena te tira un mensaje que esta vacio y no se puede añadir al lista 
+          if (this.newFrase.texto.trim() === '' || this.newFrase.autor.trim() === '') {
+            this.alertMessage = 'Los campos de frase y autor no pueden estar vacíos.';
+            this.alertClass = 'alert-warning';
+            return;
+          }
+          this.frases.push({ ...this.newFrase });  //te tira el mensage cuando la frase y el autor estan correcto 
+          this.newFrase = { texto: '', autor: '' };
+          this.alertMessage = 'Frase añadida correctamente.';
+          this.alertClass = 'alert-success';
+        },
+        saveEdit() {
+          if (this.editFrase.texto.trim() === '' || this.editFrase.autor.trim() === '') {//te tira un mensaje cuando estan bacios 
+            this.alertMessage = 'Los campos de frase y autor no pueden estar vacíos.';
+            this.alertClass = 'alert-warning';
+            return;
+          }
+          this.frases[this.editIndex] = { ...this.editFrase }; // se actualisa 
+          this.editIndex = null;
+          this.alertMessage = 'Frase actualizada correctamente.';
+          this.alertClass = 'alert-success';
+        },
+        deleteFrase(index) {
+          if (confirm('¿Estás seguro de que deseas eliminar esta frase?')) {   // se eliminan 
+            this.frases.splice(index, 1);
+            this.alertMessage = 'Frase eliminada correctamente.';
+            this.alertClass = 'alert-success';
+          }
+        }
+      }
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>
